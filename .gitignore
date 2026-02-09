@@ -1,0 +1,16 @@
+.venv/
+venv/
+env/
+ENV/
+data/
+runs/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.log
+*.sqlite
