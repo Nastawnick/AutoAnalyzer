@@ -126,6 +126,8 @@ import base64
 
 model_molmo = 'allenai/molmo-2-8b:free'
 model_qwen = 'qwen/qwen-2.5-vl-7b-instruct:free'
+model_nemotron = 'nvidia/nemotron-nano-12b-v2-vl:free'
+model_other = 'qwen/qwen3-vl-30b-a3b-thinking'
 
 def encode_to_base64(image_path):
     with open(image_path, 'rb') as image:
@@ -216,7 +218,7 @@ class ConnectionManager:
 
 class BaseAi:
     def __init__(self):
-        self.config = RequestConfig(api_key = qwen_api_key, base_url = "https://openrouter.ai/api/v1/chat/completions", model = model_molmo)
+        self.config = RequestConfig(api_key = qwen_api_key, base_url = "https://openrouter.ai/api/v1/chat/completions", model = model_other)
         self.http_client = HttpClient(config=self.config)
         self.connection = ConnectionManager(config=self.config, http_client=self.http_client)
 

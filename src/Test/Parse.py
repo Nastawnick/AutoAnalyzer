@@ -48,8 +48,13 @@ async def task_detector(page) -> set:
         selector='.form-group.ng-scope:has(h4:has-text("Название товара"))',
         state="visible"
     )
+    # button_save = page.wait_for_selector(
+    #     selector='.form-group button[ng-click="accept()"]',
+    #     state="visible"
+    # )
+
     button_save = page.wait_for_selector(
-        selector='.form-group button[ng-click="accept()"]',
+        selector='button:has-text("Сохранить")',
         state="visible"
     )
 
@@ -71,6 +76,11 @@ async def task_detector(page) -> set:
     text_area = page.wait_for_selector(
         selector='.form-group textarea#sku_title',
         state="visible"
+    )
+
+    input_name = page.wait_for_selector(
+        selector='input#sku_title',
+        state='visible'
     )
 
     button_cant_end = page.wait_for_selector(
@@ -118,6 +128,26 @@ async def task_detector(page) -> set:
         state="visible"
     )
 
+    property_value = page.wait_for_selector(
+        selector='select[ng-model="property.value"]',
+        state="visible"
+    )
+
+    not_found = page.wait_for_selector(
+        selector='input[ng-model="not_found"]',
+        state="visible"
+    )
+
+    button_not_found = page.wait_for_selector(
+        selector='button[ng-click="valueNotFound()"]',
+        state="visible"
+    )
+
+    h3_text = page.wait_for_selector(
+        selector='h3',
+        state="visible"
+    )
+
     page_storage = PageStorage()
 
     metro_price_task = asyncio.create_task(check_element2(metro_price, 2000, page_storage.storage, 'metro_price'))
@@ -147,6 +177,13 @@ async def task_detector(page) -> set:
     cant_scan_code_task = asyncio.create_task(
         check_element2(cant_scan_code, 2000, page_storage.storage, 'cant_scan_code'))
     barcode_task = asyncio.create_task(check_element2(barcode, 2000, page_storage.storage, 'barcode'))
+
+    asyncio.create_task(check_element2(property_value, 2000, page_storage.storage, 'property_value'))
+    asyncio.create_task(check_element2(not_found, 2000, page_storage.storage, 'not_found'))
+    asyncio.create_task(check_element2(button_not_found, 2000, page_storage.storage, 'button_not_found'))
+    asyncio.create_task(check_element2(input_name, 2000, page_storage.storage, 'input_name'))
+    asyncio.create_task(check_element2(h3_text, 2000, page_storage.storage, 'h3_text'))
+
     tasks = [metro_price_task, promo_price_task, button_save_task, button_cant_do_task, article_input_task,
              text_area_task, card_price_task, product_description_task, product_title_task, button_cant_end_task,
              level_detection_task, level1_select_task, level2_select_task, level3_select_task, level4_select_task,
@@ -159,10 +196,12 @@ async def task_detector(page) -> set:
     #     print(f'element, found: {element},{found}')
 
     active_elements = set()
+
     for element in page_storage.storage:
-        print(f'element: {element} - {page_storage.storage[element]}')
+        print(f'element: {element} - {page_storage.storage[element]}, {type(element)}')
         if page_storage.storage[element]:
             active_elements.add(element)
+    print(f'🦉active_elements:')
     print(active_elements)
     return active_elements
 
@@ -188,7 +227,7 @@ class MetroPrice(Element):
 
 class Page(ABC):
     def __init__(self):
-        self.Elements = list()
+        self.Elements = set()
 
     def evaluate(self, DetectedElemets: set) -> bool:
         try:
@@ -201,7 +240,19 @@ class Page(ABC):
 
 class PagePromoPrice(Page):
     def __init__(self):
-        self.Elements = ['']
+        self.Elements = {'button_cant_do', 'button_no_price', 'promo_price', 'metro_price'}
+
+class PageProperty(Page):
+    def __init__(self):
+        self.Elements = {'not_found', 'property_value', 'product_title', 'button_save', 'button_not_found'}
+
+class PageCardPrice(Page):
+    def __init__(self):
+        self.Elements = {'promo_price', 'metro_price', 'card_price', 'button_no_price', 'button_cant_do', 'product_title', 'button_save', 'product_description'}
+
+
+
+
 
 async def task_detector2(page):
     titles_corutines = []
@@ -247,7 +298,7 @@ async def event_driven_automation():
         print(2)
         page = await context.new_page()
         print(3)
-        await page.goto("https://m54.millionagents.com/conveyor_new/jobs", wait_until="domcontentloaded", timeout=60000)
+        await page.goto("https://m54.millionagents.com/conveyor_new/jobs", wait_until="domcontentloaded", timeout=600000)
         print(4)
         try:
             waiting_phone = await page.wait_for_selector(
@@ -334,7 +385,13 @@ async def event_driven_automation():
             print(f"Ошибка при заполнении формы: {e}")
         try:
             print(f"task_detector:")
-            await task_detector(page)
+            active_elements = await task_detector(page)
+            pagePromoPrice = PagePromoPrice()
+            pageProperty = PageProperty()
+            pageCardPrice = PageCardPrice()
+            print(f"PagePromoPrice: {pagePromoPrice.evaluate(active_elements)}")
+            print(f"PageProperty: {pageProperty.evaluate(active_elements)}")
+            print(f"PageProperty: {pageCardPrice.evaluate(active_elements)}")
             print(f"task_detector is ended")
             task1 = asyncio.create_task(check_element(metro_price, 2000))
             task2 = asyncio.create_task(check_element(promo_price, 2000))
